@@ -114,7 +114,31 @@ function App() {
       })
     }));
   }
+function editarItemChecklist(coluna, tarefaId, index) {
+  const novoTexto = prompt("Editar item do checklist:");
+  if (!novoTexto) return;
 
+  setBoard(prev => ({
+    ...prev,
+    [coluna]: prev[coluna].map(t => {
+      if (t.id !== tarefaId) return t;
+      const novo = [...t.checklist];
+      novo[index] = { ...novo[index], text: novoTexto };
+      return { ...t, checklist: novo };
+    })
+  }));
+}
+
+  function excluirItemChecklist(coluna, tarefaId, index) {
+  setBoard(prev => ({
+    ...prev,
+    [coluna]: prev[coluna].map(t => {
+      if (t.id !== tarefaId) return t;
+      const novo = t.checklist.filter((_, i) => i !== index);
+      return { ...t, checklist: novo };
+    })
+  }));
+}
   function dragStart(e, coluna, tarefa) {
     e.dataTransfer.setData("task", JSON.stringify({ coluna, tarefa }));
   }
@@ -173,14 +197,36 @@ function App() {
                     React.createElement("summary", { className: "cursor-pointer text-sm" }, "Detalhes"),
                     React.createElement("div", { className: "text-sm mt-2 whitespace-pre-wrap" }, t.descricao)
                   ),
+t.checklist.map((item, i) =>
+  React.createElement("div", {
+    key: i,
+    className: "flex items-center justify-between text-sm mt-1"
+  },
+    React.createElement("div", { className: "flex gap-2 items-center" },
+      React.createElement("input", {
+        type: "checkbox",
+        checked: item.done,
+        onChange: () => toggleChecklist(coluna, t.id, i)
+      }),
+      React.createElement("span", {
+        className: item.done ? "line-through opacity-60" : ""
+      }, item.text)
+    ),
 
-                t.checklist.map((item, i) =>
-                  React.createElement("label", { key: i, className: "flex gap-2 text-sm" },
-                    React.createElement("input", { type: "checkbox", checked: item.done, onChange: () => toggleChecklist(coluna, t.id, i) }),
-                    React.createElement("span", { className: item.done ? "line-through opacity-60" : "" }, item.text)
-                  )
-                ),
+    React.createElement("div", { className: "flex gap-2 text-xs" },
+      React.createElement("button", {
+        className: "text-blue-400",
+        onClick: () => editarItemChecklist(coluna, t.id, i)
+      }, "Editar"),
 
+      React.createElement("button", {
+        className: "text-red-400",
+        onClick: () => excluirItemChecklist(coluna, t.id, i)
+      }, "Excluir")
+    )
+  )
+)
+                
                 React.createElement("div", { className: "flex gap-3 text-xs mt-2" },
                   React.createElement("button", { className: "text-blue-400", onClick: () => abrirEditar(coluna, t) }, "Editar"),
                   React.createElement("button", { className: "text-red-400", onClick: () => excluir(coluna, t.id) }, "Excluir")
