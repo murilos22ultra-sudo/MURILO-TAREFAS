@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TAREFAS</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -23,8 +23,10 @@ const prioridadeCor = {
   Alta: "border-l-red-500"
 };
 
-const progresso = (lista = []) =>
-  lista.length ? Math.round((lista.filter(i => i.done).length / lista.length) * 100) : 0;
+const progresso = checklist =>
+  checklist.length
+    ? Math.round((checklist.filter(i => i.done).length / checklist.length) * 100)
+    : 0;
 
 function App() {
   const [board, setBoard] = useState(
@@ -35,7 +37,7 @@ function App() {
     }
   );
 
-  const [mostrarModal, setMostrarModal] = useState(false);
+  const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
 
   const [titulo, setTitulo] = useState("");
@@ -56,7 +58,7 @@ function App() {
     setPrazo("");
     setPrioridade("Média");
     setChecklist([]);
-    setMostrarModal(true);
+    setModal(true);
   }
 
   function abrirEditar(coluna, tarefa) {
@@ -66,7 +68,7 @@ function App() {
     setPrazo(tarefa.prazo || "");
     setPrioridade(tarefa.prioridade);
     setChecklist(tarefa.checklist || []);
-    setMostrarModal(true);
+    setModal(true);
   }
 
   function salvar() {
@@ -93,7 +95,7 @@ function App() {
       return novo;
     });
 
-    setMostrarModal(false);
+    setModal(false);
   }
 
   function excluir(coluna, id) {
@@ -114,31 +116,33 @@ function App() {
       })
     }));
   }
-function editarItemChecklist(coluna, tarefaId, index) {
-  const novoTexto = prompt("Editar item do checklist:");
-  if (!novoTexto) return;
 
-  setBoard(prev => ({
-    ...prev,
-    [coluna]: prev[coluna].map(t => {
-      if (t.id !== tarefaId) return t;
-      const novo = [...t.checklist];
-      novo[index] = { ...novo[index], text: novoTexto };
-      return { ...t, checklist: novo };
-    })
-  }));
-}
+  function editarItemChecklist(coluna, tarefaId, index) {
+    const texto = prompt("Editar item do checklist:");
+    if (!texto) return;
+
+    setBoard(prev => ({
+      ...prev,
+      [coluna]: prev[coluna].map(t => {
+        if (t.id !== tarefaId) return t;
+        const novo = [...t.checklist];
+        novo[index].text = texto;
+        return { ...t, checklist: novo };
+      })
+    }));
+  }
 
   function excluirItemChecklist(coluna, tarefaId, index) {
-  setBoard(prev => ({
-    ...prev,
-    [coluna]: prev[coluna].map(t => {
-      if (t.id !== tarefaId) return t;
-      const novo = t.checklist.filter((_, i) => i !== index);
-      return { ...t, checklist: novo };
-    })
-  }));
-}
+    setBoard(prev => ({
+      ...prev,
+      [coluna]: prev[coluna].map(t => {
+        if (t.id !== tarefaId) return t;
+        const novo = t.checklist.filter((_, i) => i !== index);
+        return { ...t, checklist: novo };
+      })
+    }));
+  }
+
   function dragStart(e, coluna, tarefa) {
     e.dataTransfer.setData("task", JSON.stringify({ coluna, tarefa }));
   }
@@ -153,10 +157,9 @@ function editarItemChecklist(coluna, tarefaId, index) {
   }
 
   function adicionarChecklist() {
-    if (novoItem) {
-      setChecklist([...checklist, { text: novoItem, done: false }]);
-      setNovoItem("");
-    }
+    if (!novoItem) return;
+    setChecklist([...checklist, { text: novoItem, done: false }]);
+    setNovoItem("");
   }
 
   return (
@@ -185,51 +188,37 @@ function editarItemChecklist(coluna, tarefaId, index) {
                 onDragStart: e => dragStart(e, coluna, t),
                 className: `bg-gray-800 p-3 mb-3 rounded border-l-4 ${prioridadeCor[t.prioridade]}`
               },
-                React.createElement("div", { className: "flex justify-between" },
-                  React.createElement("span", { className: "font-medium" }, t.titulo),
-                  t.checklist.length > 0 && React.createElement("span", { className: "text-xs bg-gray-700 px-2 rounded" }, pct + "%")
+
+                React.createElement("div", { className: "flex justify-between mb-1" },
+                  React.createElement("strong", null, t.titulo),
+                  t.checklist.length > 0 &&
+                  React.createElement("span", { className: "text-xs bg-gray-700 px-2 rounded" }, pct + "%")
                 ),
 
                 t.prazo && React.createElement("div", { className: "text-xs text-gray-400" }, "Prazo: " + t.prazo),
 
                 t.descricao &&
-                  React.createElement("details", {},
-                    React.createElement("summary", { className: "cursor-pointer text-sm" }, "Detalhes"),
-                    React.createElement("div", { className: "text-sm mt-2 whitespace-pre-wrap" }, t.descricao)
-                  ),
-t.checklist.map((item, i) =>
-  React.createElement("div", {
-    key: i,
-    className: "flex items-center justify-between text-sm mt-1"
-  },
-    React.createElement("div", { className: "flex gap-2 items-center" },
-      React.createElement("input", {
-        type: "checkbox",
-        checked: item.done,
-        onChange: () => toggleChecklist(coluna, t.id, i)
-      }),
-      React.createElement("span", {
-        className: item.done ? "line-through opacity-60" : ""
-      }, item.text)
-    ),
+                React.createElement("details", {},
+                  React.createElement("summary", { className: "cursor-pointer text-sm" }, "Detalhes"),
+                  React.createElement("div", { className: "text-sm mt-2 whitespace-pre-wrap" }, t.descricao)
+                ),
 
-    React.createElement("div", { className: "flex gap-2 text-xs" },
-      React.createElement("button", {
-        className: "text-blue-400",
-        onClick: () => editarItemChecklist(coluna, t.id, i)
-      }, "Editar"),
+                t.checklist.map((item, i) =>
+                  React.createElement("div", { key: i, className: "flex justify-between items-center text-sm mt-1" },
+                    React.createElement("div", { className: "flex gap-2 items-center" },
+                      React.createElement("input", { type: "checkbox", checked: item.done, onChange: () => toggleChecklist(coluna, t.id, i) }),
+                      React.createElement("span", { className: item.done ? "line-through opacity-60" : "" }, item.text)
+                    ),
+                    React.createElement("div", { className: "flex gap-2 text-xs" },
+                      React.createElement("button", { className: "text-blue-400", onClick: () => editarItemChecklist(coluna, t.id, i) }, "Editar"),
+                      React.createElement("button", { className: "text-red-400", onClick: () => excluirItemChecklist(coluna, t.id, i) }, "Excluir")
+                    )
+                  )
+                ),
 
-      React.createElement("button", {
-        className: "text-red-400",
-        onClick: () => excluirItemChecklist(coluna, t.id, i)
-      }, "Excluir")
-    )
-  )
-)
-                
-                React.createElement("div", { className: "flex gap-3 text-xs mt-2" },
-                  React.createElement("button", { className: "text-blue-400", onClick: () => abrirEditar(coluna, t) }, "Editar"),
-                  React.createElement("button", { className: "text-red-400", onClick: () => excluir(coluna, t.id) }, "Excluir")
+                React.createElement("div", { className: "flex gap-3 text-xs mt-3" },
+                  React.createElement("button", { className: "text-blue-400", onClick: () => abrirEditar(coluna, t) }, "Editar tarefa"),
+                  React.createElement("button", { className: "text-red-400", onClick: () => excluir(coluna, t.id) }, "Excluir tarefa")
                 )
               );
             })
@@ -237,10 +226,13 @@ t.checklist.map((item, i) =>
         )
       ),
 
-      mostrarModal &&
+      modal &&
       React.createElement("div", { className: "fixed inset-0 bg-black/70 flex justify-center items-center" },
         React.createElement("div", { className: "bg-gray-900 p-6 rounded w-full max-w-xl" },
-          React.createElement("h3", { className: "text-xl font-semibold mb-3" }, editando ? "Editar tarefa" : "Criar tarefa"),
+
+          React.createElement("h3", { className: "text-xl font-semibold mb-3" },
+            editando ? "Editar tarefa" : "Criar tarefa"
+          ),
 
           React.createElement("input", { className: "w-full mb-2 p-2 bg-gray-800 rounded", placeholder: "Título", value: titulo, onChange: e => setTitulo(e.target.value) }),
           React.createElement("textarea", { className: "w-full mb-2 p-2 bg-gray-800 rounded", placeholder: "Descrição", value: descricao, onChange: e => setDescricao(e.target.value) }),
@@ -250,13 +242,13 @@ t.checklist.map((item, i) =>
             ["Baixa", "Média", "Alta"].map(p => React.createElement("option", { key: p }, p))
           ),
 
-          React.createElement("div", { className: "flex gap-2 mb-2" },
+          React.createElement("div", { className: "flex gap-2 mb-3" },
             React.createElement("input", { className: "flex-1 p-2 bg-gray-800 rounded", placeholder: "Item do checklist", value: novoItem, onChange: e => setNovoItem(e.target.value) }),
             React.createElement("button", { className: "bg-gray-700 px-3 rounded", onClick: adicionarChecklist }, "Adicionar")
           ),
 
-          React.createElement("div", { className: "flex justify-end gap-2 mt-4" },
-            React.createElement("button", { className: "bg-gray-700 px-4 py-2 rounded", onClick: () => setMostrarModal(false) }, "Cancelar"),
+          React.createElement("div", { className: "flex justify-end gap-2" },
+            React.createElement("button", { className: "bg-gray-700 px-4 py-2 rounded", onClick: () => setModal(false) }, "Cancelar"),
             React.createElement("button", { className: "bg-blue-600 px-4 py-2 rounded", onClick: salvar }, "Salvar")
           )
         )
@@ -269,4 +261,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 </script>
 </body>
 </html>
-``
