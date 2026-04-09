@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TAREFAS</title>
 
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 </head>
 
 <body class="bg-gray-950 text-gray-100">
@@ -31,8 +34,9 @@ const corPrioridadeBadge = {
 };
 
 function progressoChecklist(lista = []) {
-  if (!lista.length) return 0;
-  return Math.round((lista.filter(i => i.done).length / lista.length) * 100);
+  return lista.length
+    ? Math.round((lista.filter(i => i.done).length / lista.length) * 100)
+    : 0;
 }
 
 function App() {
@@ -57,7 +61,7 @@ function App() {
     localStorage.setItem("tarefas", JSON.stringify(board));
   }, [board]);
 
-  /** ✅ EXPORTAR PARA EXCEL **/
+  /* ✅ EXPORTAÇÃO FUNCIONA */
   function exportarExcel() {
     const linhas = [
       ["Status","Título","Descrição","Prazo","Prioridade","Checklist","Progresso (%)"]
@@ -82,7 +86,7 @@ function App() {
     });
 
     const csv = linhas
-      .map(l => l.map(v => `"${String(v).replace(/"/g,'""')}"`).join(";"))
+      .map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";"))
       .join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -104,6 +108,16 @@ function App() {
     setPrazo("");
     setPrioridade("Média");
     setChecklist([]);
+    setModal(true);
+  }
+
+  function abrirEditar(coluna, tarefa) {
+    setEditando({ coluna, id: tarefa.id });
+    setTitulo(tarefa.titulo);
+    setDescricao(tarefa.descricao || "");
+    setPrazo(tarefa.prazo || "");
+    setPrioridade(tarefa.prioridade);
+    setChecklist(tarefa.checklist || []);
     setModal(true);
   }
 
@@ -134,71 +148,39 @@ function App() {
     setModal(false);
   }
 
-  function dragStart(e, coluna, tarefa) {
-    e.dataTransfer.setData("task", JSON.stringify({ coluna, tarefa }));
-  }
+  return React.createElement(
+    "div",
+    { className:"p-6 max-w-7xl mx-auto" },
 
-  function drop(e, destino) {
-    const data = JSON.parse(e.dataTransfer.getData("task"));
-    setBoard(prev => ({
-      ...prev,
-      [data.coluna]: prev[data.coluna].filter(t => t.id !== data.tarefa.id),
-      [...prev[destino], data.tarefa]
-    }));
-  }
+    React.createElement("header",{className:"flex justify-between items-center mb-6"},
+      React.createElement("h1",{className:"text-3xl font-bold"},"TAREFAS"),
+      React.createElement("div",{className:"flex gap-3"},
+        React.createElement("button",{className:"bg-blue-600 px-4 py-2 rounded",onClick:abrirCriar},"+ Criar tarefa"),
+        React.createElement("button",{className:"bg-green-600 px-4 py-2 rounded",onClick:exportarExcel},"⬇ Exportar Excel")
+      )
+    ),
 
-  return (
-    React.createElement("div",{className:"p-6 max-w-7xl mx-auto"},
-
-      React.createElement("header",{className:"flex justify-between items-center mb-6"},
-        React.createElement("h1",{className:"text-3xl font-bold"},"TAREFAS"),
-        React.createElement("div",{className:"flex gap-3"},
-          React.createElement("button",{className:"bg-blue-600 px-4 py-2 rounded",onClick:abrirCriar},"+ Criar tarefa"),
-          React.createElement("button",{className:"bg-green-600 px-4 py-2 rounded",onClick:exportarExcel},"⬇ Exportar Excel")
-        )
-      ),
-
-      React.createElement("div",{className:"grid md:grid-cols-3 gap-6"},
-        ETAPAS.map(coluna =>
-          React.createElement("div",{key:coluna,className:"bg-gray-900 p-4 rounded",
-            onDragOver:e=>e.preventDefault(),onDrop:e=>drop(e,coluna)},
-            React.createElement("h2",{className:"font-semibold mb-3"},coluna),
-
-            board[coluna].map(t =>
-              React.createElement("div",{key:t.id,draggable:true,onDragStart:e=>dragStart(e,coluna,t),
-                className:`relative bg-gray-800 p-3 mb-3 rounded border-l-4 ${corPorColuna[coluna]}`},
-                React.createElement("strong",null,t.titulo),
-                t.prazo && React.createElement("div",{className:"text-xs text-gray-400"},"Prazo: "+t.prazo),
-                React.createElement("div",{className:"absolute bottom-2 right-2"},
-                  React.createElement("span",{className:"px-2 py-1 text-xs rounded-full font-semibold "+corPrioridadeBadge[t.prioridade]},t.prioridade)
-                )
+    React.createElement("div",{className:"grid md:grid-cols-3 gap-6"},
+      ETAPAS.map(coluna =>
+        React.createElement("div",{key:coluna,className:"bg-gray-900 p-4 rounded"},
+          React.createElement("h2",{className:"font-semibold mb-3"},coluna),
+          board[coluna].map(t =>
+            React.createElement("div",{key:t.id,className:`relative bg-gray-800 p-3 mb-3 rounded border-l-4 ${corPorColuna[coluna]}`},
+              React.createElement("strong",null,t.titulo),
+              React.createElement("div",{className:"absolute bottom-2 right-2"},
+                React.createElement("span",{className:"px-2 py-1 text-xs rounded-full font-semibold "+corPrioridadeBadge[t.prioridade]},t.prioridade)
               )
             )
           )
         )
-      ),
-
-      modal &&
-        React.createElement("div",{className:"fixed inset-0 bg-black/70 flex items-center justify-center"},
-          React.createElement("div",{className:"bg-gray-900 p-6 rounded w-full max-w-xl"},
-            React.createElement("input",{className:"w-full mb-2 p-2 bg-gray-800",placeholder:"Título",value:titulo,onChange:e=>setTitulo(e.target.value)}),
-            React.createElement("textarea",{className:"w-full mb-2 p-2 bg-gray-800",placeholder:"Descrição",value:descricao,onChange:e=>setDescricao(e.target.value)}),
-            React.createElement("input",{type:"date",className:"w-full mb-2 p-2 bg-gray-800",value:prazo,onChange:e=>setPrazo(e.target.value)}),
-            React.createElement("select",{className:"w-full mb-2 p-2 bg-gray-800",value:prioridade,onChange:e=>setPrioridade(e.target.value)},
-              ["Baixa","Média","Alta"].map(p=>React.createElement("option",{key:p},p))
-            ),
-            React.createElement("div",{className:"flex justify-end gap-2 mt-4"},
-              React.createElement("button",{className:"bg-gray-700 px-4 py-2",onClick:()=>setModal(false)},"Cancelar"),
-              React.createElement("button",{className:"bg-blue-600 px-4 py-2",onClick:salvar},"Salvar")
-            )
-          )
-        )
+      )
     )
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root"))
-  .render(React.createElement(App));
+ReactDOM.createRoot(document.getElementById("root")).render(
+  React.createElement(App)
+);
 </script>
 </body>
 </html>
